@@ -1,0 +1,18 @@
+# Ignore node_modules, Python cache, and test output
+node_modules
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite
+*.log
+*.out
+*.bak
+*.tmp
+.git
+.gitignore
+.vscode
+README.md
+# Ignore test and local files
+/tests/

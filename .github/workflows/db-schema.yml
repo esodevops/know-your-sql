@@ -1,0 +1,79 @@
+name: Database Schema CI
+
+on:
+  push:
+    paths:
+      - "psql/**.sql"
+      - "mysql/**.sql"
+      - ".github/workflows/db-schema.yml"
+  pull_request:
+    paths:
+      - "psql/**.sql"
+      - "mysql/**.sql"
+      - ".github/workflows/db-schema.yml"
+
+jobs:
+  schema-check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for Postgres
+        run: |
+          until pg_isready -h localhost -p 5432; do sleep 2; done
+      - name: Apply schema (PostgreSQL)
+        run: |
+          psql -h localhost -U postgres -d testdb -f psql/ecommerce.sql
+        env:
+          PGPASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      - name: Run pgTAP tests (if present)
+        run: |
+          if [ -f tests/pg_tap.sql ]; then psql -h localhost -U postgres -d testdb -f tests/pg_tap.sql; fi
+        env:
+          PGPASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+      - name: Check for schema drift
+        run: |
+          pg_dump -h localhost -U postgres -d testdb -s > out_schema.sql
+          git diff --exit-code out_schema.sql || (echo 'Schema drift detected! Please update your SQL files.' && exit 1)
+        env:
+          PGPASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+
+  docker-build-and-push:
+    runs-on: ubuntu-latest
+    needs: schema-check
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Build and push dev image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/know-your-sql:dev
+      - name: Build and push prod image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.prod
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/know-your-sql:prod
