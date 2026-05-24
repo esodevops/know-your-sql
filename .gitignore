@@ -1,0 +1,40 @@
+# Ignore Python cache and environment files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+venv/
+
+# Ignore VS Code settings
+.vscode/
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore SQL dump and log files
+*.sql~
+*.log
+*.dump
+
+# Ignore node_modules if any JS work
+node_modules/
+
+# Ignore Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore any backup files
+*~
+*.bak
+
+# Ignore test output
+/test-output/
+
+# Ignore datasets generated during testing
+/datasets-psql/*.log
+/datasets-psql/*.tmp
+
+exercises/ecommerce/solution.md
+exercises/enrollment/solution.md
+exercises/human-resource/solution.md
+queries/
