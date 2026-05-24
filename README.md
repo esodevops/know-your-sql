@@ -1,5 +1,71 @@
 # know-your-sql
 
+### Required Setup for CI/CD
+
+**Set the PostgreSQL password as a GitHub Actions secret (do not hardcode it):**
+
+- Go to your repository on GitHub
+- Navigate to **Settings > Secrets and variables > Actions**
+- Click **New repository secret**
+- Name it `POSTGRES_PASSWORD` and set the value to your desired password (choose a strong password; do not hardcode it in code or config files)
+
+This secret is used by the CI workflow to provision the test database securely. For local Docker usage, you can set the password via an environment variable or a `.env` file:
+
+```bash
+# .env example (do not commit this file)
+POSTGRES_PASSWORD=your_strong_password_here
+```
+
+Then run Docker with:
+
+```bash
+docker run --env-file .env -p 5432:5432 know-your-sql:dev
+```
+
+Or set the variable directly:
+
+```bash
+docker run -e POSTGRES_PASSWORD=your_strong_password_here -p 5432:5432 know-your-sql:dev
+```
+
+## Containerization & Deployment
+
+This repo supports containerized development and production environments using Docker.
+
+### Build and Run Locally
+
+- **Development:**
+  ```bash
+  docker build -f Dockerfile -t know-your-sql:dev .
+  # Recommended: use a .env file or environment variable, not a hardcoded password
+  docker run --env-file .env -p 5432:5432 know-your-sql:dev
+  # Or
+  docker run -e POSTGRES_PASSWORD=your_dev_password -p 5432:5432 know-your-sql:dev
+  ```
+- **Production:**
+  ```bash
+  docker build -f Dockerfile.prod -t know-your-sql:prod .
+  # Recommended: use a .env file or environment variable, not a hardcoded password
+  docker run --env-file .env -p 5432:5432 know-your-sql:prod
+  # Or
+  docker run -e POSTGRES_PASSWORD=your_prod_password -p 5432:5432 know-your-sql:prod
+  ```
+
+### Automated Docker Hub Deployment
+
+On every push and pull request, the CI/CD workflow will:
+
+- Build both dev and prod images
+- Push them to Docker Hub as:
+  - `${{ secrets.DOCKERHUB_USERNAME }}/know-your-sql:dev`
+  - `${{ secrets.DOCKERHUB_USERNAME }}/know-your-sql:prod`
+
+**Note:** You must set `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` as GitHub Actions secrets for this to work.
+
+See [Dockerfile](Dockerfile), [Dockerfile.prod](Dockerfile.prod), and the workflow [db-schema.yml](.github/workflows/db-schema.yml) for details.
+
+---
+
 Practice SQL datasets and exercises for MySQL and PostgreSQL
 
 ## Project Structure
@@ -87,4 +153,3 @@ Project includes a .gitignore for Python, VS Code, SQL logs, and backup files.
 - `Space` - View next output
 
 Practice, learn, and master SQL with real-world datasets and query challenges!
-
