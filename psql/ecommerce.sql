@@ -287,6 +287,9 @@ VALUES
     (29, 'Oscar Isaac', 'Marketing', 5200, 28),
     (30, 'Penny Lane', 'Support', 4100, 27);
 
+-- ====================
+-- PRODUCTS TABLE
+-- ====================
 CREATE TABLE ecommerce.products (
     product_id INT PRIMARY KEY,
     name VARCHAR(50),
